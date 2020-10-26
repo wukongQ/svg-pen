@@ -1,0 +1,33 @@
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.container{
+  width: 100%;
+  position: relative;
+  button{
+    margin: 10px;
+    cursor: pointer;
+  }
+  .svgWrap{
+    width: 800px;
+    height: 400px;
+    & > svg {
+      border: 1px solid blue;
+    }
+    position: relative;
+    .operationSvg{
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: transparent;
+      circle,
+      rect{
+        cursor: move;
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
-import SvgTest from './SvgTest'
+import SvgPen from './SvgPen'
 
 export {
-  SvgTest
+  SvgPen
 }

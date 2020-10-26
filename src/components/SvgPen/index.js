@@ -4,7 +4,7 @@ import styles from './index.less'
 
 const blueColor = '#4F80FF'
 
-function SvgTest () {
+function SvgPen () {
   const drawRef = useRef({
     svgEle: null,
     pathEle: null,
@@ -15,7 +15,6 @@ function SvgTest () {
   const [pathList, setPathList] = useState([])
   const [editStatus, setEditStatus] = useState(true)
   const [operation, setOperation] = useState(true)
-  const [nowOpIndex, setNowOpIndex] = useState(0)
   
   useEffect(() => {
     drawRef.current.svgEle = SVG().addTo(svgWrapEleRef.current).size(800, 400)
@@ -110,7 +109,6 @@ function SvgTest () {
   }
 
   const onRectMouseDown = (e, pathIndex) => {
-    setNowOpIndex(pathIndex)
     mouseSaver.current = {
       x: e.pageX,
       y: e.pageY
@@ -241,4 +239,4 @@ function parsePathItem(pathItem) {
   }
 }
 
-export default SvgTest
+export default SvgPen

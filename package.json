@@ -1,16 +1,14 @@
 {
-  "name": "svgtest",
+  "name": "svg-pen",
   "version": "1.0.0",
   "main": "src/index.js",
   "author": "dlgonepiece@gmail.com",
   "license": "MIT",
   "scripts": {
-    "start": "parcel index.html --open",
+    "serve": "parcel index.html --open",
     "commit": "git add . & npx git-cz"
   },
   "dependencies": {
-    "@sentry/react": "^5.26.0",
-    "@sentry/tracing": "^5.26.0",
     "@svgdotjs/svg.js": "^3.0.16",
     "less": "^3.12.2",
     "react": "^16.14.0",

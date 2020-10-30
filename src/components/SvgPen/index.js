@@ -46,28 +46,30 @@ function SvgPen () {
       setPathList([['M', e.offsetX, e.offsetY]])
     } else {
       const pathArr = drawRef.current.pathEle.array()
-      const lastItem = pathArr[pathArr.length - 1]
-      const lastPoint = {
-        x: lastItem[lastItem.length - 2],
-        y: lastItem[lastItem.length - 1]
-      }
       const nowPoint = {
         x: e.offsetX,
         y: e.offsetY
       }
-      const rate = 4
-      const a = (lastPoint.y - nowPoint.y) / (lastPoint.x - nowPoint.x)
-      const b = lastPoint.y - a * lastPoint.x
-      const nx1 = (lastPoint.x - nowPoint.x) * 3 / rate + nowPoint.x
-      const ny1 = nx1 * a + b
-      const nx2 = (lastPoint.x - nowPoint.x) / rate + nowPoint.x
-      const ny2 = nx2 * a + b
-      setPathList(pathArr.concat([['C', toFixNumber(nx1), toFixNumber(ny1), toFixNumber(nx2), toFixNumber(ny2), toFixNumber(nowPoint.x), toFixNumber(nowPoint.y)]]))
+      const ctlPoints = calcBesselControlPoint(pathArr, nowPoint)
+      setPathList(pathArr.concat([['C', ...ctlPoints, toFixNumber(nowPoint.x), toFixNumber(nowPoint.y)]]))
     }
   }
 
-  const onCompleteDraw = () => {
-    setEditStatus(!editStatus)
+  const onCompleteDraw = (type) => {
+    if (type === 'close' && pathList.length > 2) {
+      const firstItem = pathList[0]
+      const startPoint = {
+        x: firstItem[firstItem.length - 2],
+        y: firstItem[firstItem.length - 1]
+      }
+      const ctlPoints = calcBesselControlPoint(pathList, startPoint)
+      pathList.push(['C', ...ctlPoints, startPoint.x, startPoint.y])
+      pathList.push(['Z'])
+      setPathList([...pathList])
+      setEditStatus(false)
+    } else {
+      setEditStatus(!editStatus)
+    }
   }
 
   const onToggleOperation = () => {
@@ -142,6 +144,14 @@ function SvgPen () {
           nextPathItem[1] += offsetX
           nextPathItem[2] += offsetY
         }
+        if (isPathCloseItem(pathArr[pathArr.length - 1])) { // 闭合路径同步与起点相连的贝塞尔曲线
+          const lastCurvePathItem = pathArr[pathArr.length - 2]
+          const clen = lastCurvePathItem.length
+          lastCurvePathItem[clen - 2] = rectPoint.x
+          lastCurvePathItem[clen - 1] = rectPoint.y
+          lastCurvePathItem[clen - 4] += offsetX
+          lastCurvePathItem[clen - 3] += offsetY
+        }
         break
       case 'C':
         pathItem[pathItem.length - 2] = rectPoint.x
@@ -163,7 +173,14 @@ function SvgPen () {
 
   return (
     <div className={styles.container}>
-      <button onClick={onCompleteDraw}>{editStatus ? '完成' : '继续' }绘制</button>
+      {
+        !isPathCloseItem(pathList[pathList.length - 1]) && (
+          <>
+            <button onClick={onCompleteDraw}>{editStatus ? '完成' : '继续' }绘制</button>
+            <button onClick={() => onCompleteDraw('close')}>闭合</button>
+          </>
+        )
+      }
       <button onClick={onToggleOperation}>切换操作显示</button>
       <div className={styles.svgWrap} ref={svgWrapEleRef}>
         <svg className={styles.operationSvg} xmlns="http://www.w3.org/2000/svg" version="1.1" width="800" height="400" style={{pointerEvents: editStatus ? 'none' : 'auto'}}>
@@ -171,10 +188,17 @@ function SvgPen () {
             {
               pathList.map((item, index) => {
                 const { type, rectPoint, ctlPoints } = parsePathItem(item)
+                if (!['M', 'C'].includes(type)) {
+                  return ''
+                }
                 const lastParseItem = index > 0 ? parsePathItem(pathList[index - 1]) : null
                 return (
                   <Fragment key={index}>
-                    <rect x={rectPoint.x - 3} y={rectPoint.y - 3} width='6' height='6' fill={index === 0 ? blueColor : '#fff'} stroke={blueColor} onMouseDown={e => onRectMouseDown(e, index)} />
+                    {
+                      !(type === 'C' && isPathCloseItem(pathList[index + 1])) && (
+                        <rect x={rectPoint.x - 3} y={rectPoint.y - 3} width='6' height='6' fill={index === 0 ? blueColor : '#fff'} stroke={blueColor} onMouseDown={e => onRectMouseDown(e, index)} />
+                      )
+                    }
                     {
                       type === 'C' && ctlPoints.map((ctlp, ctlIndex) => {
                         return (
@@ -237,6 +261,26 @@ function parsePathItem(pathItem) {
     rectPoint,
     ctlPoints
   }
+}
+
+function calcBesselControlPoint (pathArr, endPoint) {
+  const lastItem = pathArr[pathArr.length - 1]
+  const lastPoint = {
+    x: lastItem[lastItem.length - 2],
+    y: lastItem[lastItem.length - 1]
+  }
+  const rate = 4
+  const a = (lastPoint.y - endPoint.y) / (lastPoint.x - endPoint.x)
+  const b = lastPoint.y - a * lastPoint.x
+  const nx1 = (lastPoint.x - endPoint.x) * 3 / rate + endPoint.x
+  const ny1 = nx1 * a + b
+  const nx2 = (lastPoint.x - endPoint.x) / rate + endPoint.x
+  const ny2 = nx2 * a + b
+  return [toFixNumber(nx1), toFixNumber(ny1), toFixNumber(nx2), toFixNumber(ny2)]
+}
+
+function isPathCloseItem (pathItem) {
+  return pathItem && pathItem[0] === 'Z'
 }
 
 export default SvgPen
